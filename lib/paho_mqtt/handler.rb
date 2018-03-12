@@ -52,14 +52,14 @@ module PahoMqtt
     end
 
     def handle_packet(packet)
-      PahoMqtt.logger.info("New packet #{packet.class} recieved.") if PahoMqtt.logger?
+      PahoMqtt.log("New packet #{packet.class} recieved.", level: :info)
       type = packet_type(packet)
       self.send("handle_#{type}", packet)
     end
 
     def register_topic_callback(topic, callback, &block)
       if topic.nil?
-        PahoMqtt.logger.error("The topics where the callback is trying to be registered have been found nil.") if PahoMqtt.logger?
+        PahoMqtt.log("The topics where the callback is trying to be registered have been found nil.", level: :error)
         raise ArgumentError
       end
       clear_topic_callback(topic)
@@ -73,7 +73,7 @@ module PahoMqtt
 
     def clear_topic_callback(topic)
       if topic.nil?
-        PahoMqtt.logger.error("The topics where the callback is trying to be unregistered have been found nil.") if PahoMqtt.logger?
+        PahoMqtt.log("The topics where the callback is trying to be unregistered have been found nil.", level: :error)
         raise ArgumentError
       end
       @registered_callback.delete_if {|pair| pair.first == topic}
@@ -82,7 +82,7 @@ module PahoMqtt
 
     def handle_connack(packet)
       if packet.return_code == 0x00
-        PahoMqtt.logger.debug("Connack receive and connection accepted.") if PahoMqtt.logger?
+        PahoMqtt.log("Connack receive and connection accepted.", level: :debug)
         handle_connack_accepted(packet.session_present)
       else
         handle_connack_error(packet.return_code)
@@ -99,19 +99,19 @@ module PahoMqtt
 
     def new_session?(session_flag)
       if !@clean_session && !session_flag
-        PahoMqtt.logger.debug("New session created for the client") if PahoMqtt.logger?
+        PahoMqtt.log("New session created for the client", level: :debug)
       end
     end
 
     def clean_session?(session_flag)
       if @clean_session && !session_flag
-        PahoMqtt.logger.debug("No previous session found by server, starting a new one.") if PahoMqtt.logger?
+        PahoMqtt.log("No previous session found by server, starting a new one.", level: :debug)
       end
     end
 
     def old_session?(session_flag)
       if !@clean_session && session_flag
-        PahoMqtt.logger.debug("Previous session restored by the server.") if PahoMqtt.logger?
+        PahoMqtt.log("Previous session restored by the server.", level: :debug)
       end
     end
 
@@ -179,10 +179,10 @@ module PahoMqtt
       if return_code == 0x01
         raise LowVersionException
       elsif CONNACK_ERROR_MESSAGE.has_key(return_code.to_sym)
-        PahoMqtt.logger.warm(CONNACK_ERRO_MESSAGE[return_code])
+        PahoMqtt.log(CONNACK_ERRO_MESSAGE[return_code], level: :warn)
         MQTT_CS_DISCONNECTED
       else
-        PahoMqtt.logger("Unknown return code for CONNACK packet: #{return_code}")
+        PahoMqtt.log("Unknown return code for CONNACK packet: #{return_code}", level: :error)
         raise PacketException
       end
     end
@@ -265,7 +265,7 @@ module PahoMqtt
         type.to_s.split('::').last.downcase
       else
         puts "Packet: #{packet.inspect}"
-        PahoMqtt.logger.error("Received an unexpeceted packet: #{packet}") if PahoMqtt.logger?
+        PahoMqtt.log("Received an unexpeceted packet: #{packet}", level: :error)
          raise PacketException
       end
     end

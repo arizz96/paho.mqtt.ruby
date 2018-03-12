@@ -61,12 +61,12 @@ module PahoMqtt
             adjust_qos.delete(t)
           else
 
-            @logger.error("The qos value is invalid in subscribe.") if PahoMqtt.logger?
+            PahoMqtt.log("The qos value is invalid in subscribe.", level: :error)
             raise PacketException
           end
         end
       else
-        @logger.error("The packet id is invalid, already used.") if PahoMqtt.logger?
+        PahoMqtt.log("The packet id is invalid, already used.", level: :error)
         raise PacketException
       end
       @subscribed_mutex.synchronize {
@@ -83,7 +83,7 @@ module PahoMqtt
       if to_unsub.length == 1
         to_unsub = to_unsub.first[:packet].topics
       else
-        @logger.error("The packet id is invalid, already used.") if PahoMqtt.logger?
+        PahoMqtt.log("The packet id is invalid, already used.", level: :error)
         raise PacketException
       end
 

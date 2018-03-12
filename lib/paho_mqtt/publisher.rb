@@ -61,7 +61,7 @@ module PahoMqtt
       when 2
         send_pubrec(packet_id)
       else
-        @logger.error("The packet qos value is invalid in publish.") if logger?
+        PahoMqtt.log("The packet qos value is invalid in publish.", level: :error)
         raise PacketException
       end
       MQTT_ERR_SUCCESS

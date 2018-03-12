@@ -164,7 +164,7 @@ module PahoMqtt
   def check_topics(topics, filters)
     if topics.is_a?(String) && filters.is_a?(String)
     else
-      @logger.error("Topics or Wildcards are not found as String.") if logger?
+      PahoMqtt.log("Topics or Wildcards are not found as String.", level: :error)
       raise ArgumentError
     end
   end
