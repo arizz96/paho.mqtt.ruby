@@ -118,6 +118,12 @@ module PahoMqtt
     @logger.is_a?(Logger)
   end
 
+  def self.log(text, level: 'info')
+    return unless logger? && %w(info error debug warn).include?(level.to_s)
+
+    logger.send(level, text)
+  end
+
   def match_filter(topics, filters)
     check_topics(topics, filters)
     index = 0
