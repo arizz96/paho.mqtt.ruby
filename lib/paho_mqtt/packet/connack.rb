@@ -83,11 +83,11 @@ module PahoMqtt
         super(buffer)
         @connack_flags = shift_bits(buffer)
         unless @connack_flags[1,7] == [false, false, false, false, false, false, false]
-          raise "Invalid flags in Connack variable header"
+          raise InvalidFlagsError, "in CONNACK variable header"
         end
         @return_code = shift_byte(buffer)
         unless buffer.empty?
-          raise "Extra bytes at end of Connect Acknowledgment packet"
+          raise ExtraBytesError, "at end of CONNACK packet"
         end
       end
 

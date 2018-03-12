@@ -77,7 +77,7 @@ module PahoMqtt
           self.protocol_name ||= 'MQTT'
           self.protocol_level ||= 0x04
         else
-          raise ArgumentError.new("Unsupported protocol version: #{version}")
+          raise UnsupportedProtocolVersionError, version
         end
       end
 
@@ -88,7 +88,7 @@ module PahoMqtt
         body += encode_string(@protocol_name)
         body += encode_bytes(@protocol_level.to_i)
         if @keep_alive < 0
-          raise "Invalid keep-alive value: cannot be less than 0"
+          raise InvalidKeepAliveValueError, "cannot be less than 0"
         end
 
         body += encode_flags(@connect_flags)

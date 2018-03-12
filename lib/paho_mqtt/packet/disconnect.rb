@@ -29,7 +29,7 @@ module PahoMqtt
       def parse_body(buffer)
         super(buffer)
         unless buffer.empty?
-          raise "Extra bytes at end of Disconnect packet"
+          raise ExtraBytesError, "at end of Disconnect packet"
         end
       end
     end

@@ -30,7 +30,7 @@ module PahoMqtt
         super(buffer)
         @id = shift_short(buffer)
         unless buffer.empty?
-          raise "Extra bytes at end of Publish Complete packet"
+          raise ExtraBytesError, "at end of Publish Complete packet"
         end
       end
 

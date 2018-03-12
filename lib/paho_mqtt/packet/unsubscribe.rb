@@ -46,7 +46,7 @@ module PahoMqtt
       # Get serialisation of packet's body
       def encode_body
         if @topics.empty?
-          raise "no topics given when serialising packet"
+          raise InvalidTopicError, "no topics given when serialising packet"
         end
         body = encode_short(@id)
         topics.each { |topic| body += encode_string(topic) }
@@ -66,7 +66,7 @@ module PahoMqtt
       # @private
       def validate_flags
         if @flags != [false, true, false, false]
-          raise "Invalid flags in UNSUBSCRIBE packet header"
+          raise InvalidFlagsError, "in UNSUBSCRIBE packet header"
         end
       end
 

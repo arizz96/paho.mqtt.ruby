@@ -70,7 +70,7 @@ module PahoMqtt
             end
           else
             # Meh?
-            raise "Invalid topics input: #{value.inspect}"
+            raise InvalidTopicError, value.inspect
           end
         end
         @topics
@@ -79,7 +79,7 @@ module PahoMqtt
       # Get serialisation of packet's body
       def encode_body
         if @topics.empty?
-          raise "no topics given when serialising packet"
+          raise InvalidTopicError, "no topics given when serialising packet"
         end
         body = encode_short(@id)
         topics.each do |item|
@@ -105,7 +105,7 @@ module PahoMqtt
       # @private
       def validate_flags
         if @flags != [false, true, false, false]
-          raise "Invalid flags in SUBSCRIBE packet header"
+          raise InvalidFlagsError, "in SUBSCRIBE packet header"
         end
       end
 
