@@ -40,7 +40,7 @@ module PahoMqtt
         super(buffer)
         @id = shift_short(buffer)
         unless buffer.empty?
-          raise "Extra bytes at end of Publish Release packet"
+          raise ExtraBytesError, "at end of Publish Release packet"
         end
       end
 
@@ -48,7 +48,7 @@ module PahoMqtt
       # @private
       def validate_flags
         if @flags != [false, true, false, false]
-          raise "Invalid flags in PUBREL packet header"
+          raise InvalidFlagsError, "in PUBREL packet header"
         end
       end
 

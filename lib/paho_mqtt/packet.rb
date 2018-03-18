@@ -29,5 +29,46 @@ require "paho_mqtt/packet/pingreq"
 require "paho_mqtt/packet/pingresp"
 require "paho_mqtt/packet/disconnect"
 
-module PahoMqtt
+module PahoMqtt::Packet
+  class ::Error < StandardError
+  end
+
+  class InvalidSizeError < ::Error
+  end
+
+  class IncompleteHeaderError < ::Error
+  end
+
+  class InvalidTypeIdentifierError < ::Error
+  end
+
+  class ParsingFailedError < ::Error
+  end
+
+  class OversizeBodyError < ::Error
+  end
+
+  class InvalidFlagsError < ::Error
+  end
+
+  class ExtraBytesError < ::Error
+  end
+
+  class UnsupportedProtocolVersionError < ::Error
+  end
+
+  class InvalidKeepAliveValueError < ::Error
+  end
+
+  class InvalidQosValueError < ::Error
+  end
+
+  class InvalidTopicError < ::Error
+  end
+
+  class DupNotAllowedError < ::Error
+  end
+
+  class InvalidReturnCodeError < ::Error
+  end
 end

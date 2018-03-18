@@ -191,7 +191,7 @@ module PahoMqtt
     def reconnect
       @reconnect_thread = Thread.new do
         RECONNECT_RETRY_TIME.times do
-          PahoMqtt.logger.debug("New reconnect attempt...") if PahoMqtt.logger?
+          PahoMqtt.log("New reconnect attempt...", level: :debug)
           connect
           if connected?
             break
@@ -200,7 +200,7 @@ module PahoMqtt
           end
         end
         unless connected?
-          PahoMqtt.logger.error("Reconnection attempt counter is over. (#{RECONNECT_RETRY_TIME} times)") if PahoMqtt.logger?
+          PahoMqtt.log("Reconnection attempt counter is over. (#{RECONNECT_RETRY_TIME} times)", level: :error)
           disconnect(false)
         end
       end
@@ -217,7 +217,7 @@ module PahoMqtt
 
     def publish(topic, payload="", retain=false, qos=0)
       if topic == "" || !topic.is_a?(String)
-        PahoMqtt.logger.error("Publish topics is invalid, not a string or empty.") if PahoMqtt.logger?
+        PahoMqtt.log("Publish topics is invalid, not a string or empty.", level: :error)
         raise ArgumentError
       end
       id = next_packet_id
@@ -233,7 +233,7 @@ module PahoMqtt
         end
         MQTT_ERR_SUCCESS
       rescue ProtocolViolation
-        PahoMqtt.logger.error("Subscribe topics need one topic or a list of topics.") if PahoMqtt.logger?
+        PahoMqtt.log("Subscribe topics need one topic or a list of topics.", level: :error)
         disconnect(false)
         raise ProtocolViolation
       end
@@ -247,7 +247,7 @@ module PahoMqtt
         end
         MQTT_ERR_SUCCESS
       rescue ProtocolViolation
-        PahoMqtt.logger.error("Unsubscribe need at least one topic.") if PahoMqtt.logger?
+        PahoMqtt.log("Unsubscribe need at least one topic.", level: :error)
         disconnect(false)
         raise ProtocolViolation
       end
@@ -355,7 +355,7 @@ module PahoMqtt
     end
 
     def downgrade_version
-      PahoMqtt.logger.debug("Unable to connect to the server with the version #{@mqtt_version}, trying 3.1") if PahoMqtt.logger?
+      PahoMqtt.log("Unable to connect to the server with the version #{@mqtt_version}, trying 3.1", level: :debug)
       if @mqtt_version != "3.1"
         @mqtt_version = "3.1"
         connect(@host, @port, @keep_alive)

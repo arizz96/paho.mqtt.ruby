@@ -44,7 +44,7 @@ module PahoMqtt
         sleep 0.0001
       end
       unless is_connected?
-        PahoMqtt.logger.warn("Connection failed. Couldn't recieve a Connack packet from: #{@host}, socket is \"#{@socket}\".") if PahoMqtt.logger?
+        PahoMqtt.log("Connection failed. Couldn't recieve a Connack packet from: #{@host}, socket is \"#{@socket}\".", level: :warn)
         raise Exception.new("Connection failed. Check log for more details.") unless reconnection
       end
       @cs
@@ -55,7 +55,7 @@ module PahoMqtt
     end
 
     def do_disconnect(publisher, explicit, mqtt_thread)
-      PahoMqtt.logger.debug("Disconnecting from #{@host}.") if PahoMqtt.logger?
+      PahoMqtt.log("Disconnecting from #{@host}.", level: :debug)
       if explicit
         explicit_disconnect(publisher, mqtt_thread)
       end
@@ -79,11 +79,11 @@ module PahoMqtt
     end
 
     def config_socket
-      PahoMqtt.logger.debug("Attempt to connect to host: #{@host}...") if PahoMqtt.logger?
+      PahoMqtt.log("Attempt to connect to host: #{@host}", level: :warn)
       begin
         tcp_socket = TCPSocket.new(@host, @port)
       rescue StandardError
-        PahoMqtt.logger.warn("Could not open a socket with #{@host} on port #{@port}.") if PahoMqtt.logger?
+        PahoMqtt.log("Could not open a socket with #{@host} on port #{@port}.", level: :warn)
       end
       if @ssl
         encrypted_socket(tcp_socket, @ssl_context)
@@ -98,7 +98,7 @@ module PahoMqtt
         @socket.sync_close = true
         @socket.connect
       else
-        PahoMqtt.logger.error("The SSL context was found as nil while the socket's opening.") if PahoMqtt.logger?
+        PahoMqtt.log("The SSL context was found as nil while the socket's opening.", level: :error)
         raise Exception
       end
     end
@@ -114,7 +114,7 @@ module PahoMqtt
 
     def host=(host)
       if host.nil? || host == ""
-        PahoMqtt.logger.error("The host was found as nil while the connection setup.") if PahoMqtt.logger?
+        PahoMqtt.log("The host was found as nil while the connection setup.", level: :error)
         raise ArgumentError
       else
         @host = host
@@ -123,7 +123,7 @@ module PahoMqtt
 
     def port=(port)
       if port.to_i <= 0
-        PahoMqtt.logger.error("The port value is invalid (<= 0). Could not setup the connection.") if PahoMqtt.logger?
+        PahoMqtt.log("The port value is invalid (<= 0). Could not setup the connection.", level: :error)
         raise ArgumentError
       else
         @port = port
@@ -154,12 +154,12 @@ module PahoMqtt
       now = Time.now
       timeout_req = (@sender.last_ping_req + (keep_alive * 0.7).ceil)
       if timeout_req <= now && persistent
-        PahoMqtt.logger.debug("Checking if server is still alive...") if PahoMqtt.logger?
+        PahoMqtt.log("Checking if server is still alive...", level: :debug)
         send_pingreq
       end
       timeout_resp = last_ping_resp + (keep_alive * 1.1).ceil
       if timeout_resp <= now
-        PahoMqtt.logger.debug("No activity period over timeout, disconnecting from #{@host}.") if PahoMqtt.logger?
+        PahoMqtt.log("No activity period over timeout, disconnecting from #{@host}.", level: :debug)
         @cs = MQTT_CS_DISCONNECT
       end
       @cs

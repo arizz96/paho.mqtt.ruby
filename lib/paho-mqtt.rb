@@ -118,6 +118,12 @@ module PahoMqtt
     @logger.is_a?(Logger)
   end
 
+  def self.log(text, level: 'info')
+    return unless logger? && %w(info error debug warn).include?(level.to_s)
+
+    logger.send(level, text)
+  end
+
   def match_filter(topics, filters)
     check_topics(topics, filters)
     index = 0
@@ -158,7 +164,7 @@ module PahoMqtt
   def check_topics(topics, filters)
     if topics.is_a?(String) && filters.is_a?(String)
     else
-      @logger.error("Topics or Wildcards are not found as String.") if logger?
+      PahoMqtt.log("Topics or Wildcards are not found as String.", level: :error)
       raise ArgumentError
     end
   end

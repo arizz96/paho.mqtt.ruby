@@ -82,7 +82,7 @@ module PahoMqtt
       def self.parse_header(buffer)
         # Check that the packet is a long as the minimum packet size
         if buffer.bytesize < 2
-          raise "Invalid packet: less than 2 bytes long"
+          raise InvalidSizeError
         end
 
         # Create a new packet object
@@ -96,7 +96,7 @@ module PahoMqtt
         pos = 1
         begin
           if buffer.bytesize <= pos
-            raise "The packet length header is incomplete"
+            raise IncompleteHeaderError
           end
           digit = bytes[pos]
           body_length += ((digit & 0x7F) * multiplier)
@@ -120,7 +120,7 @@ module PahoMqtt
           type_id = ((byte & 0xF0) >> 4)
           packet_class = PahoMqtt::PACKET_TYPES[type_id]
           if packet_class.nil?
-            raise "Invalid packet type identifier: #{type_id}"
+            raise InvalidTypeIdentifierError, type_id
           end
 
           # Convert the last 4 bits of byte into array of true/false
@@ -153,7 +153,7 @@ module PahoMqtt
       def type_id
         index = PahoMqtt::PACKET_TYPES.index(self.class)
         if index.nil?
-          raise "Invalid packet type: #{self.class}"
+          raise InvalidTypeIdentifierError, self.class
         end
         index
       end
@@ -179,7 +179,7 @@ module PahoMqtt
       # Parse the body (variable header and payload) of a packet
       def parse_body(buffer)
         if buffer.bytesize != body_length
-          raise "Failed to parse packet - input buffer (#{buffer.bytesize}) is not the same as the body length header (#{body_length})"
+          raise ParsingFailedError, "input buffer (#{buffer.bytesize}) is not the same as the body length header (#{body_length})"
         end
       end
 
@@ -204,8 +204,8 @@ module PahoMqtt
 
         # Check that that packet isn't too big
         body_length = body.bytesize
-        if body_length > 268435455
-          raise "Error serialising packet: body is more than 256MB"
+        if body_length > 268435455 # 256MB
+          raise OversizeBodyError
         end
 
         # Build up the body length field bytes
@@ -225,7 +225,7 @@ module PahoMqtt
       # @private
       def validate_flags
         if flags != [false, false, false, false]
-          raise "Invalid flags in #{type_name} packet header"
+          raise InvalidFlagsError, "validating #{type_name} packet header"
         end
       end
 
