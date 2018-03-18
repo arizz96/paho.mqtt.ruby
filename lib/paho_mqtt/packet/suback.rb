@@ -59,14 +59,14 @@ module PahoMqtt
       def parse_body(buffer)
         super(buffer)
         @id = shift_short(buffer)
-        while(buffer.bytesize>0)
+        while buffer.bytesize > 0
           @return_codes << shift_byte(buffer)
         end
       end
 
       # Returns a human readable string, summarising the properties of the packet
       def inspect
-        "\#<#{self.class}: 0x%2.2X, rc=%s>" % [id, return_codes.map{|rc| "0x%2.2X" % rc}.join(',')]
+        "\#<#{self.class}: 0x%2.2X, rc=%s>" % [id, return_codes.map { |rc| "0x%2.2X" % rc }.join(',')]
       end
     end
   end

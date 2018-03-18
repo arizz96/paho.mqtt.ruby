@@ -21,9 +21,9 @@ module PahoMqtt
 
     def initialize
       @registered_callback = []
-      @last_ping_resp = -1
-      @publisher = nil
-      @subscriber = nil
+      @last_ping_resp      = -1
+      @publisher           = nil
+      @subscriber          = nil
     end
 
     def config_pubsub(publisher, subscriber)
@@ -52,7 +52,7 @@ module PahoMqtt
     end
 
     def handle_packet(packet)
-      PahoMqtt.log("New packet #{packet.class} recieved.", level: :info)
+      PahoMqtt.log("New packet #{packet.class} received.", level: :info)
       type = packet_type(packet)
       self.send("handle_#{type}", packet)
     end
@@ -76,13 +76,13 @@ module PahoMqtt
         PahoMqtt.log("The topics where the callback is trying to be unregistered have been found nil.", level: :error)
         raise ArgumentError
       end
-      @registered_callback.delete_if {|pair| pair.first == topic}
+      @registered_callback.delete_if { |pair| pair.first == topic }
       MQTT_ERR_SUCCESS
     end
 
     def handle_connack(packet)
       if packet.return_code == 0x00
-        PahoMqtt.log("Connack receive and connection accepted.", level: :debug)
+        PahoMqtt.log("CONNACK receive and connection accepted.", level: :debug)
         handle_connack_accepted(packet.session_present)
       else
         handle_connack_error(packet.return_code)
@@ -99,7 +99,7 @@ module PahoMqtt
 
     def new_session?(session_flag)
       if !@clean_session && !session_flag
-        PahoMqtt.log("New session created for the client", level: :debug)
+        PahoMqtt.log("New session created for the client.", level: :debug)
       end
     end
 
@@ -121,9 +121,9 @@ module PahoMqtt
 
     def handle_suback(packet)
       max_qos = packet.return_codes
-      id = packet.id
-      topics = []
-      topics = @subscriber.add_subscription(max_qos, id, topics)
+      id      = packet.id
+      topics  = []
+      topics  = @subscriber.add_subscription(max_qos, id, topics)
       unless topics.empty?
         @on_suback.call(topics) unless @on_suback.nil?
       end
@@ -182,7 +182,7 @@ module PahoMqtt
         PahoMqtt.log(CONNACK_ERRO_MESSAGE[return_code], level: :warn)
         MQTT_CS_DISCONNECTED
       else
-        PahoMqtt.log("Unknown return code for CONNACK packet: #{return_code}", level: :error)
+        PahoMqtt.log("Unknown return code for CONNACK packet: #{return_code}.", level: :error)
         raise PacketException
       end
     end
@@ -265,7 +265,7 @@ module PahoMqtt
         type.to_s.split('::').last.downcase
       else
         puts "Packet: #{packet.inspect}"
-        PahoMqtt.log("Received an unexpeceted packet: #{packet}", level: :error)
+        PahoMqtt.log("Received an unexpeceted packet: #{packet}.", level: :error)
          raise PacketException
       end
     end
@@ -277,7 +277,7 @@ module PahoMqtt
       end
       unless callbacks.empty?
         callbacks.each do |callback|
-            callback.call(packet)
+          callback.call(packet)
         end
       end
     end

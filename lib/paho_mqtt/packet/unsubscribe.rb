@@ -26,7 +26,7 @@ module PahoMqtt
       # Default attribute values
       ATTR_DEFAULTS = {
         :topics => [],
-        :flags => [false, true, false, false],
+        :flags  => [false, true, false, false],
       }
 
       # Create a new Unsubscribe packet
@@ -57,7 +57,7 @@ module PahoMqtt
       def parse_body(buffer)
         super(buffer)
         @id = shift_short(buffer)
-        while(buffer.bytesize>0)
+        while buffer.bytesize > 0
           @topics << shift_string(buffer)
         end
       end
@@ -74,7 +74,7 @@ module PahoMqtt
       def inspect
         "\#<#{self.class}: 0x%2.2X, %s>" % [
           id,
-          topics.map {|t| "'#{t}'"}.join(', ')
+          topics.map { |t| "'#{t}'" }.join(', ')
         ]
       end
     end

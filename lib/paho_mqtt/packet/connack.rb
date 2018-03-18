@@ -54,7 +54,7 @@ module PahoMqtt
       def return_msg
         case return_code
         when 0x00
-          "Connection Accepted"
+          "Connection accepted"
         when 0x01
           "Connection refused: unacceptable protocol version"
         when 0x02
@@ -75,7 +75,7 @@ module PahoMqtt
         body = ''
         body += encode_bits(@connack_flags)
         body += encode_bytes(@return_code.to_i)
-        return body
+        body
       end
 
       # Parse the body (variable header and payload) of a Connect Acknowledgment packet
