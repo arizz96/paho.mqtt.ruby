@@ -14,12 +14,12 @@
 
 require "paho_mqtt/version"
 require "paho_mqtt/client"
+require "paho_mqtt/exception"
 require "paho_mqtt/packet"
 require 'logger'
 
 module PahoMqtt
   extend self
-
   attr_accessor :logger
 
   # Default connection setup
@@ -27,16 +27,16 @@ module PahoMqtt
   DEFAULT_PORT          = 1883
   SELECT_TIMEOUT        = 0
   LOOP_TEMPO            = 0.005
-  RECONNECT_RETRY_TIME  = 3
-  RECONNECT_RETRY_TEMPO = 5
 
   # MAX size of queue
-  MAX_READ    = 10
-  MAX_PUBACK  = 20
-  MAX_PUBREC  = 20
-  MAX_PUBREL  = 20
-  MAX_PUBCOMP = 20
-  MAX_WRITING = MAX_PUBACK + MAX_PUBREC + MAX_PUBREL  + MAX_PUBCOMP
+  MAX_SUBACK   = 10
+  MAX_UNSUBACK = 10
+  MAX_READ     = 50
+  MAX_PUBACK   = 100
+  MAX_PUBREC   = 100
+  MAX_PUBREL   = 100
+  MAX_PUBCOMP  = 100
+  MAX_WRITING  = MAX_PUBACK + MAX_PUBREC + MAX_PUBREL  + MAX_PUBCOMP
 
   # Connection states values
   MQTT_CS_NEW        = 0
@@ -167,23 +167,5 @@ module PahoMqtt
       PahoMqtt.log("Topics or Wildcards are not found as String.", level: :error)
       raise ArgumentError
     end
-  end
-
-  class Exception < ::Exception
-  end
-
-  class ProtocolViolation < PahoMqtt::Exception
-  end
-
-  class WritingException < PahoMqtt::Exception
-  end
-
-  class ReadingException < PahoMqtt::Exception
-  end
-
-  class PacketException < PahoMqtt::Exception
-  end
-
-  class LowVersionException < PahoMqtt::Exception
   end
 end

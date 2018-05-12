@@ -48,7 +48,8 @@ module PahoMqtt
       # @private
       def validate_flags
         if @flags != [false, true, false, false]
-          raise InvalidFlagsError, "in PUBREL packet header"
+          raise PahoMqtt::PacketFormatException.new(
+                  "Invalid flags in #{type_name} packet header")
         end
       end
 

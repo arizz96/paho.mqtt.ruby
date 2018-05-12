@@ -82,10 +82,11 @@ module PahoMqtt
 
     def handle_connack(packet)
       if packet.return_code == 0x00
-        PahoMqtt.log("CONNACK receive and connection accepted.", level: :debug)
+        PahoMqtt.logger.debug(packet.return_msg) if PahoMqtt.logger?
         handle_connack_accepted(packet.session_present)
       else
-        handle_connack_error(packet.return_code)
+        PahoMqtt.logger.warm(packet.return_msg) if PahoMqtt.logger?
+        MQTT_CS_DISCONNECTED
       end
       @on_connack.call(packet) unless @on_connack.nil?
       MQTT_CS_CONNECTED
@@ -139,12 +140,12 @@ module PahoMqtt
     end
 
     def handle_publish(packet)
-      id = packet.id
-      qos = packet.qos
-      if @publisher.do_publish(qos, id) == MQTT_ERR_SUCCESS
-        @on_message.call(packet) unless @on_message.nil?
-        check_callback(packet)
-      end
+        id = packet.id
+        qos = packet.qos
+        if @publisher.do_publish(qos, id) == MQTT_ERR_SUCCESS
+          @on_message.call(packet) unless @on_message.nil?
+          check_callback(packet)
+        end
     end
 
     def handle_puback(packet)
@@ -172,18 +173,6 @@ module PahoMqtt
       id = packet.id
       if @publisher.do_pubcomp(id) == MQTT_ERR_SUCCESS
         @on_pubcomp.call(packet) unless @on_pubcomp.nil?
-      end
-    end
-
-    def handle_connack_error(return_code)
-      if return_code == 0x01
-        raise LowVersionException
-      elsif CONNACK_ERROR_MESSAGE.has_key(return_code.to_sym)
-        PahoMqtt.log(CONNACK_ERRO_MESSAGE[return_code], level: :warn)
-        MQTT_CS_DISCONNECTED
-      else
-        PahoMqtt.log("Unknown return code for CONNACK packet: #{return_code}.", level: :error)
-        raise PacketException
       end
     end
 
@@ -264,9 +253,8 @@ module PahoMqtt
       if PahoMqtt::PACKET_TYPES[3..13].include?(type)
         type.to_s.split('::').last.downcase
       else
-        puts "Packet: #{packet.inspect}"
-        PahoMqtt.log("Received an unexpeceted packet: #{packet}.", level: :error)
-         raise PacketException
+        PahoMqtt.logger.error("Received an unexpeceted packet: #{packet}.") if PahoMqtt.logger?
+         raise PacketException.new('Invalid packet type id')
       end
     end
 
