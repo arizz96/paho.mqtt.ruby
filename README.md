@@ -2,6 +2,7 @@
 
 The following file describes the Paho Mqtt client API for the ruby programming language. It enables applications to connect to an MQTT message broker threw the [MQTT](http://mqtt.org/) protocol (versions 3.1.1). MQTT is a lightweight protocol designed for IoT/M2M. A Mqtt client can connect to a message broker in order to publish and received data contained in short messages. The messages are exchanged on topics where the client has to subscribe for receiving message.
 
+Produced by Ruby development Inc.
 ## Contents
 * [Installation](#installation)
 * [Usage](#usage)
@@ -241,7 +242,7 @@ When a packet is received and inspected, an appropriate handler is called. The h
 ### Callbacks
 The callbacks could be defined in a three different ways, as block, as Proc or as Lambda. The callback has access to the packet which triggered it.  
 ```ruby
-### Register a callback trigger on the reception of a CONNACK packet
+### Register a callback trigger on the reception of a CONNACK packet with return code 0x00
 client.on_connack = proc { puts "Successfully Connected" }
 
 ### Register a callback trigger on the reception of PUBLISH packet

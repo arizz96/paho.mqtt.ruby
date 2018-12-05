@@ -39,25 +39,29 @@ module PahoMqtt
         :retain  => retain,
         :qos     => qos
       )
-      case qos
-      when 1
-        @puback_mutex.synchronize do
-          if @waiting_puback.length >= MAX_PUBACK
-            PahoMqtt.logger.error('PUBACK queue is full, could not send with qos=1') if PahoMqtt.logger?
-            return MQTT_ERR_FAIL
-          end
-          @waiting_puback.push(:id => new_id, :packet => packet, :timestamp => Time.now)
+      begin
+        case qos
+        when 1
+          push_queue(@waiting_puback, @puback_mutex, MAX_QUEUE, packet, new_id)
+        when 2
+          push_queue(@waiting_pubrec, @pubrec_mutex, MAX_QUEUE, packet, new_id)
         end
-      when 2
-        @pubrec_mutex.synchronize do
-          if @waiting_pubrec.length >= MAX_PUBREC
-            PahoMqtt.logger.error('PUBREC queue is full, could not send with qos=2') if PahoMqtt.logger?
-            return MQTT_ERR_FAIL
-          end
-          @waiting_pubrec.push(:id => new_id, :packet => packet, :timestamp => Time.now)
-        end
+      rescue FullQueueException
+        PahoMqtt.logger.warn("PUBLISH queue is full, waiting for publishing #{packet.inspect}") if PahoMqtt.logger?
+        sleep SELECT_TIMEOUT
+        retry
       end
       @sender.append_to_writing(packet)
+      MQTT_ERR_SUCCESS
+    end
+
+    def push_queue(waiting_queue, queue_mutex, max_packet, packet, new_id)
+      if waiting_queue.length >= max_packet
+        raise FullQueueException
+      end
+      queue_mutex.synchronize do
+        waiting_queue.push(:id => new_id, :packet => packet, :timestamp => Time.now)
+      end
       MQTT_ERR_SUCCESS
     end
 
@@ -94,13 +98,7 @@ module PahoMqtt
       packet = PahoMqtt::Packet::Pubrec.new(
         :id => packet_id
       )
-      @pubrel_mutex.synchronize do
-        if @waiting_pubrel.length >= MAX_PUBREL
-          PahoMqtt.logger.error('PUBREL queue is full, could not acknowledge qos=2') if PahoMqtt.logger?
-          return MQTT_ERR_FAIL
-        end
-        @waiting_pubrel.push(:id => packet_id , :packet => packet, :timestamp => Time.now)
-      end
+      push_queue(@waiting_pubrel, @pubrel_mutex, MAX_QUEUE, packet, packet_id)
       @sender.append_to_writing(packet)
       MQTT_ERR_SUCCESS
     end
@@ -110,20 +108,13 @@ module PahoMqtt
         @waiting_pubrec.delete_if { |pck| pck[:id] == packet_id }
       end
       send_pubrel(packet_id)
-      MQTT_ERR_SUCCESS
     end
 
     def send_pubrel(packet_id)
       packet = PahoMqtt::Packet::Pubrel.new(
         :id => packet_id
       )
-      @pubcomp_mutex.synchronize do
-        if @waiting_pubcomp.length >= MAX_PUBCOMP
-          PahoMqtt.logger.error('PUBCOMP queue is full, could not acknowledge qos=2') if PahoMqtt.logger?
-          return MQTT_ERR_FAIL
-        end
-        @waiting_pubcomp.push(:id => packet_id, :packet => packet, :timestamp => Time.now)
-      end
+      push_queue(@waiting_pubcomp, @pubcomp_mutex, MAX_QUEUE, packet, packet_id)
       @sender.append_to_writing(packet)
       MQTT_ERR_SUCCESS
     end
@@ -133,7 +124,6 @@ module PahoMqtt
         @waiting_pubrel.delete_if { |pck| pck[:id] == packet_id }
       end
       send_pubcomp(packet_id)
-      MQTT_ERR_SUCCESS
     end
 
     def send_pubcomp(packet_id)

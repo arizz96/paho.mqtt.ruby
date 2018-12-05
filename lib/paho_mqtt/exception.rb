@@ -40,4 +40,13 @@ module PahoMqtt
 
   class LowVersionException < Exception
   end
+
+  class FullWritingException < Exception
+  end
+
+  class FullQueueException < Exception
+  end
+
+  class NotSupportedEncryptionException < Exception
+  end
 end

@@ -41,7 +41,6 @@ module PahoMqtt
       connect_timeout = Time.now + @ack_timeout
       while (Time.now <= connect_timeout) && !is_connected? do
         @cs = @handler.receive_packet
-        sleep 0.0001
       end
       unless is_connected?
         PahoMqtt.logger.warn("Connection failed. Couldn't recieve a Connack packet from: #{@host}.") if PahoMqtt.logger?
@@ -64,7 +63,7 @@ module PahoMqtt
     end
 
     def explicit_disconnect(publisher, mqtt_thread)
-      @sender.flush_waiting_packet
+      @sender.flush_waiting_packet(false)
       send_disconnect
       mqtt_thread.kill if mqtt_thread && mqtt_thread.alive?
       publisher.flush_publisher unless publisher.nil?
@@ -82,13 +81,13 @@ module PahoMqtt
       PahoMqtt.log("Attempt to connect to host: #{@host}", level: :warn)
       begin
         tcp_socket = TCPSocket.new(@host, @port)
+        if @ssl
+          encrypted_socket(tcp_socket, @ssl_context)
+        else
+          @socket = tcp_socket
+        end
       rescue StandardError
         PahoMqtt.log("Could not open a socket with #{@host} on port #{@port}.", level: :warn)
-      end
-      if @ssl
-        encrypted_socket(tcp_socket, @ssl_context)
-      else
-        @socket = tcp_socket
       end
     end
 
@@ -144,21 +143,26 @@ module PahoMqtt
       MQTT_ERR_SUCCESS
     end
 
-    def send_pingreq
-      packet = PahoMqtt::Packet::Pingreq.new
-      @sender.send_packet(packet)
-      MQTT_ERR_SUCCESS
+    # Would return 'true' if ping requset should be sent and  'nil' if not
+    def should_send_ping?(now, keep_alive, last_packet_received_at)
+      last_pingreq_sent_at = @sender.last_pingreq_sent_at
+      last_pingresp_received_at = @handler.last_pingresp_received_at
+      if !last_pingreq_sent_at || (last_pingresp_received_at && (last_pingreq_sent_at <= last_pingresp_received_at))
+        next_pingreq_at = [@sender.last_packet_sent_at, last_packet_received_at].min + (keep_alive * 0.7).ceil
+        return next_pingreq_at <= now
+      end
     end
 
-    def check_keep_alive(persistent, last_ping_resp, keep_alive)
+    def check_keep_alive(persistent, keep_alive)
       now = Time.now
-      timeout_req = (@sender.last_ping_req + (keep_alive * 0.7).ceil)
-      if timeout_req <= now && persistent
+      last_packet_received_at = @handler.last_packet_received_at
+      # send a PINGREQ only if we don't already wait for a PINGRESP
+      if persistent && should_send_ping?(now, keep_alive, last_packet_received_at)
         PahoMqtt.log("Checking if server is still alive...", level: :debug)
-        send_pingreq
+        @sender.send_pingreq
       end
-      timeout_resp = last_ping_resp + (keep_alive * 1.1).ceil
-      if timeout_resp <= now
+      disconnect_timeout_at = last_packet_received_at + (keep_alive * 1.1).ceil
+      if disconnect_timeout_at <= now
         PahoMqtt.log("No activity period over timeout, disconnecting from #{@host}.", level: :debug)
         @cs = MQTT_CS_DISCONNECT
       end
