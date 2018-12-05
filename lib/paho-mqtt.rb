@@ -22,21 +22,18 @@ module PahoMqtt
   extend self
   attr_accessor :logger
 
+  MAX_PACKET_ID = 65535
+
   # Default connection setup
   DEFAULT_SSL_PORT      = 8883
   DEFAULT_PORT          = 1883
-  SELECT_TIMEOUT        = 0
-  LOOP_TEMPO            = 0.005
+  SELECT_TIMEOUT        = 0.002
 
   # MAX size of queue
   MAX_SUBACK   = 10
   MAX_UNSUBACK = 10
-  MAX_READ     = 50
-  MAX_PUBACK   = 100
-  MAX_PUBREC   = 100
-  MAX_PUBREL   = 100
-  MAX_PUBCOMP  = 100
-  MAX_WRITING  = MAX_PUBACK + MAX_PUBREC + MAX_PUBREL  + MAX_PUBCOMP
+  MAX_PUBLISH  = 1000
+  MAX_QUEUE    = 1000
 
   # Connection states values
   MQTT_CS_NEW        = 0
@@ -102,12 +99,16 @@ module PahoMqtt
 
   Thread.abort_on_exception = true
 
-  def logger=(logger_path)
-    file           = File.open(logger_path, "a+")
-    file.sync      = true
-    log_file       = Logger.new(file)
-    log_file.level = Logger::DEBUG
-    @logger        = log_file
+  def logger=(logger_instance)
+    if logger_instance.is_a? String
+      file           = File.open(logger_instance, 'a+')
+      file.sync      = true
+      log_file       = Logger.new(file)
+      log_file.level = Logger::DEBUG
+      @logger        = log_file
+    else
+      @logger        = logger_instance
+    end
   end
 
   def logger
